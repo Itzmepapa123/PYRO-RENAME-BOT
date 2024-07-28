@@ -1,3 +1,4 @@
+import asyncio
 from pyrogram import Client, filters
 from pyrogram.enums import MessageMediaType
 from pyrogram.errors import FloodWait
@@ -13,6 +14,10 @@ from asyncio import sleep
 from PIL import Image
 import os, time
 import re
+
+# Initialize queue and semaphore
+queue = asyncio.Queue()
+semaphore = asyncio.Semaphore(4)  # Limit to 4 concurrent operations
 
 def extract_episode_number(filename):
     # Regular expressions to match episode numbers in various formats
@@ -31,6 +36,19 @@ def extract_episode_number(filename):
 
 @Client.on_message(filters.private & (filters.document | filters.audio | filters.video))
 async def rename_start(client, message):
+    await message.reply_text("File added to queue.")
+    await queue.put((client, message))
+
+async def process_queue():
+    while True:
+        client, message = await queue.get()
+        try:
+            async with semaphore:
+                await handle_file(client, message)
+        finally:
+            queue.task_done()
+
+async def handle_file(client, message):
     file = getattr(message, message.media.value)
     filename = file.file_name
     user_id = message.from_user.id
@@ -46,7 +64,7 @@ async def rename_start(client, message):
         
         # Replace placeholders in the template
         new_name = file_template.format(episode=episode_number or "01")
-        await message.reply_text(f"Renaming to {new_name}")
+        
         
         await rename_and_upload(client, message, file, new_name)
     else:
@@ -54,7 +72,6 @@ async def rename_start(client, message):
             text="Pʟᴇᴀꜱᴇ Sᴇᴛ A Fɪʟᴇ Nᴀᴍᴇ Tᴇᴍᴩʟᴀᴛᴇ Usɪɴɢ /file Cᴏᴍᴍᴀɴᴅ",
             reply_to_message_id=message.id
         )
-
 
 @Client.on_message(filters.command("file") & filters.private)
 async def set_file_template(client, message):
@@ -70,7 +87,6 @@ async def set_file_template(client, message):
     else:
         await message.reply_text("Pʟᴇᴀꜱᴇ Pʀᴏᴠɪᴅᴇ A Vᴀʟɪᴅ Tᴇᴍᴩʟᴀᴛᴇ.")
 
-
 async def rename_and_upload(client, message, file, new_name):
     media = getattr(file, file.media.value)
     
@@ -83,7 +99,6 @@ async def rename_and_upload(client, message, file, new_name):
 
     # Directly upload as a document
     await upload_document(client, message, file, new_name)
-
 
 async def upload_document(client, message, file, new_name):
     file_path = f"downloads/{new_name}"
@@ -149,3 +164,7 @@ async def upload_document(client, message, file, new_name):
     os.remove(file_path)
     if ph_path:
         os.remove(ph_path)
+
+# Start the queue processor
+loop = asyncio.get_event_loop()
+loop.create_task(process_queue())
