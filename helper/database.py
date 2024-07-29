@@ -2,6 +2,7 @@ import motor.motor_asyncio
 from config import Config
 from .utils import send_log
 
+
 class Database:
 
     def __init__(self, uri, database_name):
@@ -13,7 +14,8 @@ class Database:
         return dict(
             _id=int(id),                                   
             file_id=None,
-            caption=None
+            caption=None,
+            file_template=None  # Add a field for the file template
         )
 
     async def add_user(self, b, m):
@@ -51,10 +53,12 @@ class Database:
     async def get_caption(self, id):
         user = await self.col.find_one({'_id': int(id)})
         return user.get('caption', None)
-
+    
+    async def set_file_template(self, id, template):
+        await self.col.update_one({'_id': int(id)}, {'$set': {'file_template': template}})
+    
+    async def get_file_template(self, id):
+        user = await self.col.find_one({'_id': int(id)})
+        return user.get('file_template', None)
 
 db = Database(Config.DB_URL, Config.DB_NAME)
-
-
-
-
