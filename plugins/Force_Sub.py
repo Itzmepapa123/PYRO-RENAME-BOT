@@ -21,7 +21,9 @@ Repo Link : https://github.com/TEAM-PYRO-BOTZ/PYRO-RENAME-BOT
 License Link : https://github.com/TEAM-PYRO-BOTZ/PYRO-RENAME-BOT/blob/main/LICENSE
 """
 
-from pyrogram import Client, filters, enums 
+from pyrogram import Client, filters, enums, pyrogram.utils
+
+pyrogram.utils.MIN_CHANNEL_ID = -1009147483647
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from pyrogram.errors import UserNotParticipant
 from config import Config
