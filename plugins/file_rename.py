@@ -49,9 +49,21 @@ async def process_queue():
             queue.task_done()
 
 async def handle_file(client, message):
-    file = getattr(message, message.media.value)
+    # Check if the message has media
+    if hasattr(message, 'document'):
+        file = message.document
+    elif hasattr(message, 'photo'):
+        file = message.photo
+    else:
+        # Handle other media types or raise an exception
+        raise ValueError("Unsupported media type")
+
     filename = file.file_name
     user_id = message.from_user.id
+    
+    # Call the rename_and_upload function
+    new_name = f"{user_id}_{filename}"
+    await rename_and_upload(client, message, file, new_name)
     
     if file.file_size > 2000 * 1024 * 1024:
         return await message.reply_text("Sᴏʀʀy Bʀᴏ Tʜɪꜱ Bᴏᴛ Iꜱ Dᴏᴇꜱɴ'ᴛ Sᴜᴩᴩᴏʀᴛ Uᴩʟᴏᴀᴅɪɴɢ Fɪʟᴇꜱ Bɪɢɢᴇʀ Tʜᴀɴ 2Gʙ")
