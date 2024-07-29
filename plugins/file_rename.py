@@ -100,13 +100,12 @@ async def set_file_template(client, message):
         await message.reply_text("Pʟᴇᴀꜱᴇ Pʀᴏᴠɪᴅᴇ A Vᴀʟɪᴅ Tᴇᴍᴩʟᴀᴛᴇ.")
 
 async def rename_and_upload(client, message, file, new_name):
-    media = getattr(file, file.media.value)
-    
+    # Determine file extension if not present in the new name
     if not "." in new_name:
-        if "." in media.file_name:
-            extn = media.file_name.rsplit('.', 1)[-1]
+        if file.file_name and "." in file.file_name:
+            extn = file.file_name.rsplit('.', 1)[-1]
         else:
-            extn = "mkv"
+            extn = "mkv"  # Default extension if none is found
         new_name = new_name + "." + extn
 
     # Directly upload as a document
