@@ -114,8 +114,7 @@ async def rename_and_upload(client, message, file, new_name):
 async def upload_document(client, message, file, new_name):
     file_path = f"downloads/{new_name}"
     user_id = int(message.chat.id)
-    media = getattr(file, file.media.value)
-
+    
     ms = await message.reply("Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....")
     try:
         path = await client.download_media(
@@ -125,8 +124,9 @@ async def upload_document(client, message, file, new_name):
             progress_args=("Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....", ms, time.time())
         )
     except Exception as e:
-        return await ms.edit(e)
+        return await ms.edit(f"Error: {e}")
 
+    # Further processing and uploading the document
     duration = 0
     try:
         metadata = extractMetadata(createParser(file_path))
@@ -134,26 +134,32 @@ async def upload_document(client, message, file, new_name):
             duration = metadata.get('duration').seconds
     except:
         pass
-    ph_path = None
+
+    # Get caption and thumbnail
     c_caption = await db.get_caption(message.chat.id)
     c_thumb = await db.get_thumbnail(message.chat.id)
 
     if c_caption:
         try:
-            caption = c_caption.format(filename=new_name, filesize=humanbytes(media.file_size), duration=convert(duration))
+            caption = c_caption.format(
+                filename=new_name,
+                filesize=humanbytes(file.file_size),
+                duration=convert(duration)
+            )
         except Exception as e:
-            return await ms.edit(text=f"Yᴏᴜʀ Cᴀᴩᴛɪᴏɴ Eʀʀᴏʀ Exᴄᴇᴩᴛ Kᴇyᴡᴏʀᴅ Aʀɢᴜᴍᴇɴᴛ ●> ({e})")
+            return await ms.edit(f"Caption Error: {e}")
     else:
         caption = f"**{new_name}**"
 
-    if (media.thumbs or c_thumb):
+    ph_path = None
+    if (media := file.thumbs) or c_thumb:
         if c_thumb:
             ph_path = await client.download_media(c_thumb)
         else:
-            ph_path = await client.download_media(media.thumbs[0].file_id)
+            ph_path = await client.download_media(media[0].file_id)
         Image.open(ph_path).convert("RGB").save(ph_path)
         img = Image.open(ph_path)
-        img.resize((320, 320))
+        img = img.resize((320, 320))
         img.save(ph_path, "JPEG")
 
     await ms.edit("Tʀyɪɴɢ Tᴏ Uᴩʟᴏᴀᴅɪɴɢ....")
@@ -164,18 +170,15 @@ async def upload_document(client, message, file, new_name):
             thumb=ph_path,
             caption=caption,
             progress=progress_for_pyrogram,
-            progress_args=("Uᴩʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....", ms, time.time()))
+            progress_args=("Uᴩʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....", ms, time.time())
+        )
     except Exception as e:
         os.remove(file_path)
         if ph_path:
             os.remove(ph_path)
-        return await ms.edit(f" Eʀʀᴏʀ {e}")
+        return await ms.edit(f"Upload Error: {e}")
 
     await ms.delete()
     os.remove(file_path)
     if ph_path:
         os.remove(ph_path)
-
-# Start the queue processor
-loop = asyncio.get_event_loop()
-loop.create_task(process_queue())
