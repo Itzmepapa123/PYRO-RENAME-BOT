@@ -19,7 +19,9 @@ Telegram Link : https://t.me/PYRO_BOTZ
 Repo Link : https://github.com/TEAM-PYRO-BOTZ/PYRO-RENAME-BOT
 License Link : https://github.com/TEAM-PYRO-BOTZ/PYRO-RENAME-BOT/blob/main/LICENSE
 """
+import pyrogram.utils
 
+pyrogram.utils.MIN_CHANNEL_ID = -1009147483647
 import re, os, time
 
 id_pattern = re.compile(r'^.\d+$') 
