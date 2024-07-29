@@ -25,6 +25,9 @@ from config import Config
 from helper.database import db
 from pyrogram.types import Message
 from pyrogram import Client, filters
+import pyrogram.utils
+
+pyrogram.utils.MIN_CHANNEL_ID = -1009147483647
 from pyrogram.errors import FloodWait, InputUserDeactivated, UserIsBlocked, PeerIdInvalid
 import os, sys, time, asyncio, logging, datetime
 
