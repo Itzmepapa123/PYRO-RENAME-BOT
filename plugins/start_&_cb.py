@@ -27,6 +27,9 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ForceReply, CallbackQuery
 from helper.database import db
 from config import Config, Txt  
+import pyrogram.utils
+
+pyrogram.utils.MIN_CHANNEL_ID = -1009147483647
   
 
 @Client.on_message(filters.private & filters.command("start"))
